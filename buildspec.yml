@@ -2,7 +2,7 @@ version: 0.1
 
 environment_variables:
   plaintext:
-    MY_ENV: "codebuild"
+    MY_ENV: "main"
 
 phases:
   install:
@@ -21,4 +21,4 @@ phases:
 artifacts:
   type: zip
   files:
-    - codebuild
+    - main
