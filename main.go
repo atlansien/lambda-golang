@@ -1,8 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
+	"fmt"
+	"io"
+	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -41,14 +45,56 @@ func getTranslatedText(input_text string) string {
 
 }
 
-func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	input_text := request.QueryStringParameters["input_text"]
+func getModelsApi() string {
+	str := `{
+		"age": 50,
+		"sex": 1,
+		"bmi": 30.0,
+		"a1c": 6.0,
+		"lhrate": 2.0,
+		"dl": 0,
+		"dm": 0,
+		"ht": 1,
+		"ave_sbp": 120.0,
+		"ave_dbp": 90.0,
+		"ihd": 0,
+		"cva": 1
+	}`
 
-	translatedText := getTranslatedText(input_text)
+	req, err := http.NewRequest(
+		"POST",
+		"https://offa0oas8d.execute-api.ap-northeast-1.amazonaws.com/stg-models-api/predict-user",
+		bytes.NewBuffer([]byte(str)),
+	)
+	if err != nil {
+		fmt.Println("@1", err)
+		return ""
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	res, err := client.Do(req)
+	defer res.Body.Close()
+	if err != nil {
+		fmt.Println("@2", err)
+		return ""
+	}
+	fmt.Println(res)
+	body, _ := io.ReadAll(res.Body)
+	return string(body)
+}
+
+func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	// input_text := request.QueryStringParameters["input_text"]
+
+	// translatedText := getTranslatedText(input_text)
+	modelsApi := getModelsApi()
 
 	res := Response{
 		RequestMethod: request.RequestContext.HTTPMethod,
-		OutPutText:    translatedText,
+		// OutPutText:    translatedText,
+		OutPutText: modelsApi,
 	}
 	jsonBytes, _ := json.Marshal(res)
 
