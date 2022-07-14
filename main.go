@@ -82,6 +82,7 @@ func getModelsApi() string {
 	}
 	fmt.Println(res)
 	body, _ := io.ReadAll(res.Body)
+	fmt.Println(string(body))
 	return string(body)
 }
 
