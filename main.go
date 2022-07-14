@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -20,10 +19,7 @@ type Response struct {
 	OutPutText string `json:"outputText"`
 }
 
-func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	input_text := request.QueryStringParameters["input_text"]
-	fmt.Println(input_text)
-
+func getTranslatedText(input_text string) string {
 	sourceText := flag.String("text", input_text, "source text")
 	sourceLC := flag.String("slc", "ja", "source language code [en|ja|fr]...")
 	targetLC := flag.String("tlc", "en", "target language code [en|ja|fr]...")
@@ -41,14 +37,20 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		panic(err)
 	}
 
+	return *result.TranslatedText
+
+}
+
+func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	input_text := request.QueryStringParameters["input_text"]
+
+	translatedText := getTranslatedText(input_text)
+
 	res := Response{
 		RequestMethod: request.RequestContext.HTTPMethod,
-		OutPutText:    *result.TranslatedText,
+		OutPutText:    translatedText,
 	}
 	jsonBytes, _ := json.Marshal(res)
-
-	fmt.Println("res", res)
-	fmt.Println("jsonBytes", jsonBytes)
 
 	return events.APIGatewayProxyResponse{
 		Body:       string(jsonBytes),
